@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Phone, MapPin, Github, Linkedin, Download, ExternalLink, Code, Database, Globe, Server } from 'lucide-react';
+import { toast } from "sonner";
+import { sendEmail } from '@/lib/emailjs';
 
 const Index = () => {
   const [formData, setFormData] = useState({
@@ -13,13 +14,26 @@ const Index = () => {
     email: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // EmailJS integration will be added later
-    alert('Thank you for your message! I will get back to you soon.');
-    setFormData({ name: '', email: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      const result = await sendEmail(formData);
+      
+      if (result.success) {
+        toast.success('Message sent successfully! I will get back to you soon.');
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        toast.error('Failed to send message. Please try again or contact me directly.');
+      }
+    } catch (error) {
+      toast.error('An error occurred. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const skills = [
@@ -260,6 +274,7 @@ const Index = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     required
+                    disabled={isSubmitting}
                   />
                   <Input
                     type="email"
@@ -267,6 +282,7 @@ const Index = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
+                    disabled={isSubmitting}
                   />
                   <Textarea
                     placeholder="Your Message"
@@ -274,9 +290,14 @@ const Index = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     required
+                    disabled={isSubmitting}
                   />
-                  <Button type="submit" className="w-full bg-portfolio-coral hover:bg-portfolio-coral-dark">
-                    Send Message
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-portfolio-coral hover:bg-portfolio-coral-dark"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
                   </Button>
                 </form>
               </CardContent>
